@@ -4,11 +4,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 import pokerEnums.eCardNo;
 import pokerEnums.eHandStrength;
 import pokerEnums.eRank;
 import pokerEnums.eSuit;
+import pokerEnums.eHandExceptionType;
+
+import pokerExceptions.HandException;
 
 public class Hand {
 
@@ -53,20 +57,18 @@ public class Hand {
 	 */
 	static Hand EvaluateHand(Hand h) throws Exception {
 
-		// Sort the colleciton (by hand rank)
+		// S`rt the colleciton (by hand rank)
 		Collections.sort(h.getCardsInHand());
 
-		// TODO - Lab 3 Here's the code to throw the HandException
-		// TODO - Implement HandException
-		/*
-		 * if (h.getCardsInHand().size() != 5) { throw new
-		 * HandException(h,eHandExceptionType.ShortHand); }
-		 */
+		// throws exception if there are more or less than 5 cards in a hand
+		if (h.getCardsInHand().size() != 5) {
+			throw new HandException(h, eHandExceptionType.ShortHand);
+		}
 
 		ArrayList<Hand> ExplodedHands = new ArrayList<Hand>();
 		ExplodedHands.add(h);
 
-		ExplodedHands = ExplodeHands(ExplodedHands);
+		ExplodedHands = ExplodeHands(h);
 
 		for (Hand hEval : ExplodedHands) {
 
@@ -92,6 +94,7 @@ public class Hand {
 
 				hEval.bScored = true;
 				hEval.hs = hs;
+				hEval=h;
 
 			} catch (ClassNotFoundException x) {
 				x.printStackTrace();
@@ -108,9 +111,6 @@ public class Hand {
 				e.printStackTrace();
 			}
 		}
-
-		// TODO - Lab 3. ExplodedHands has a bunch of hands.
-		// Either 1, 52, 2
 		return h;
 	}
 
@@ -121,10 +121,110 @@ public class Hand {
 	 * @return
 	 */
 
-	private static ArrayList<Hand> ExplodeHands(ArrayList<Hand> Hands) {
-		// TODO - Lab3 Implement this
-		return null;
+	private static ArrayList<Hand> ExplodeHands(Hand h) {
+
+		ArrayList<Hand> ReturnHands = new ArrayList<Hand>();
+		ReturnHands.add(h);
+		for (int iCard = 0; iCard < 5; iCard++) {
+			ReturnHands = SubstituteCard(iCard, ReturnHands);
+		}
+		return ReturnHands;
 	}
+
+	private static ArrayList<Hand> SubstituteCard(int iCardSub, ArrayList<Hand> hands) {
+		ArrayList<Hand> CreatedHands = new ArrayList<Hand>();
+		Deck CreatedDeck = new Deck();
+
+		for (Hand h : hands) {
+			if ((h.getCardsInHand().get(iCardSub).isbWild() == true)
+					|| (h.getCardsInHand().get(iCardSub).geteSuit() == eSuit.JOKER)) {
+				for (Card JokerDeckCard : CreatedDeck.getDeck()) {
+					Hand CreatedHand = new Hand();
+					for (int iCard = 0; iCard < 5; iCard++) {
+						if (iCardSub == iCard) {
+							CreatedHand.AddToCardsInHand(JokerDeckCard);
+						} else {
+							CreatedHand.AddToCardsInHand(h.getCardsInHand().get(iCard));
+						}
+					}
+					CreatedHands.add(CreatedHand);
+				}
+			} else {
+				Hand CreatedHand = new Hand();
+				for (int iCard = 0; iCard < 5; iCard++) {
+					CreatedHand.AddToCardsInHand(h.getCardsInHand().get(iCard));
+				}
+				CreatedHands.add(CreatedHand);
+			}
+		}
+
+		return CreatedHands;
+	}
+
+	public static Comparator<Hand> HandRank = new Comparator<Hand>() {
+
+        public int compare(Hand h1, Hand h2) {
+
+            int result = 0;
+
+            result = h2.getHs().getHandStrength() - h1.getHs().getHandStrength();
+
+            if (result != 0) {
+                return result;
+            }
+
+            result = h2.getHs().getHiHand() - h1.getHs().getHiHand();
+            if (result != 0) {
+                return result;
+            }
+
+            result = h2.getHs().getLoHand() - h1.getHs().getLoHand();
+            if (result != 0) {
+                return result;
+            }
+
+            if (h2.getHs().getKickers().size() > 0) {
+                if (h1.getHs().getKickers().size() > 0) {
+                    result = h2.getHs().getKickers().get(eCardNo.FirstCard.getCardNo()).geteRank().getiRankNbr()
+                            - h1.getHs().getKickers().get(eCardNo.FirstCard.getCardNo()).geteRank().getiRankNbr();
+                }
+                if (result != 0) {
+                    return result;
+                }
+            }
+
+            if (h2.getHs().getKickers().size() > 1) {
+                if (h1.getHs().getKickers().size() > 1) {
+                    result = h2.getHs().getKickers().get(eCardNo.SecondCard.getCardNo()).geteRank().getiRankNbr()
+                            - h1.getHs().getKickers().get(eCardNo.SecondCard.getCardNo()).geteRank().getiRankNbr();
+                }
+                if (result != 0) {
+                    return result;
+                }
+            }
+
+            if (h2.getHs().getKickers().size() > 2) {
+                if (h1.getHs().getKickers().size() > 2) {
+                    result = h2.getHs().getKickers().get(eCardNo.ThirdCard.getCardNo()).geteRank().getiRankNbr()
+                            - h1.getHs().getKickers().get(eCardNo.ThirdCard.getCardNo()).geteRank().getiRankNbr();
+                }
+                if (result != 0) {
+                    return result;
+                }
+            }
+
+            if (h2.getHs().getKickers().size() > 3) {
+                if (h1.getHs().getKickers().size() > 3) {
+                    result = h2.getHs().getKickers().get(eCardNo.FourthCard.getCardNo()).geteRank().getiRankNbr()
+                            - h1.getHs().getKickers().get(eCardNo.FourthCard.getCardNo()).geteRank().getiRankNbr();
+                }
+                if (result != 0) {
+                    return result;
+                }
+            }
+            return 0;
+        }
+	};
 
 	public static boolean isHandRoyalFlush(Hand h, HandScore hs) {
 

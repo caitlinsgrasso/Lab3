@@ -64,11 +64,10 @@ public class Hand_Test {
 		try {
 			h.EvaulateHand();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		System.out.println(h.getHs().getHandStrength());
+		assertTrue(h.getHs().getHandStrength() == eHandStrength.StraightFlush.getHandStrength());
+		assertTrue(h.getHs().getHiHand() == eRank.KING.getiRankNbr());
 	}
 	
 	
@@ -90,7 +89,6 @@ public class Hand_Test {
 	
 		assertTrue(h.getHs().getHandStrength() == eHandStrength.FourOfAKind.getHandStrength());
 		assertTrue(h.getHs().getHiHand() == eRank.TEN.getiRankNbr());
-		
 	}
 	
 
